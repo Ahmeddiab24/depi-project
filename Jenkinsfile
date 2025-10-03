@@ -18,6 +18,13 @@ pipeline {
     }
     
     stages {
+        stage('Clean Workspace') {
+            steps {
+                echo 'Cleaning workspace before starting the build...'
+                deleteDir() // Ensures a fresh workspace
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 echo 'Source code checked out from GitHub'
@@ -82,7 +89,7 @@ pipeline {
             echo 'Pipeline failed! '
         }
         always {
-            echo 'Cleaning up workspace...'
+            echo 'Cleaning up workspace after build...'
             cleanWs()
         }
     }
