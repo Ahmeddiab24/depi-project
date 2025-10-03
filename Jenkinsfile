@@ -2,24 +2,26 @@ pipeline {
     agent any
     
     environment {
-        
+        // Docker Hub credentials ID (configured in Jenkins)
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         
-        
+        // Docker Hub username and image details
         DOCKER_USERNAME = 'ahmeddiab23'
         IMAGE_NAME = 'nginx-custom'
         IMAGE_TAG = '1.0'
         DOCKER_IMAGE = "${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-       EC2_HOST = '100.26.51.207'
-        EC2_USER = 'ubuntu'
+        
+        // AWS EC2 details - UPDATE THESE VALUES
+        EC2_HOST = '100.26.51.207'  // TODO: Replace with your EC2 IP
+        EC2_USER = 'ubuntu'  // or 'ubuntu' depending on your AMI
         EC2_CREDENTIALS_ID = 'ec2-ssh-credentials'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out source code from GitHub...'
-                checkout scm
+                echo 'Source code checked out from GitHub'
+                // Code is automatically checked out when using "Pipeline script from SCM"
             }
         }
         
@@ -38,7 +40,7 @@ pipeline {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push()
-                        dockerImage.push('latest')  
+                        dockerImage.push('latest')  // Also tag as latest
                     }
                 }
             }
@@ -73,10 +75,11 @@ pipeline {
     
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline completed successfully! '
+            echo "Application deployed at: http://${EC2_HOST}"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Pipeline failed! '
         }
         always {
             echo 'Cleaning up workspace...'
