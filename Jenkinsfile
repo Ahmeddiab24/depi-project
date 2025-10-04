@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        // Docker Hub credentials ID (configured in Jenkins)
+        // Docker Hub credentials (configured in Jenkins)
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         
         // Docker Hub username and image details
@@ -11,81 +11,95 @@ pipeline {
         IMAGE_TAG = '1.0'
         DOCKER_IMAGE = "${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
         
-        // AWS EC2 details - Replace with your actual EC2 IP address
-        EC2_HOST = '100.26.51.207'        // TODO: Update with your EC2 public IP
-        EC2_USER = 'ubuntu'            // Use 'ubuntu' for Ubuntu AMIs
+        // AWS EC2 details - REPLACE WITH YOUR VALUES
+        EC2_HOST = '100.26.51.207'     // Example: '3.145.67.89'
+        EC2_USER = 'ubuntu'                // Use 'ubuntu' for Ubuntu AMIs
         EC2_CREDENTIALS_ID = 'ec2-ssh-credentials'
     }
     
     stages {
         stage('Verify Workspace') {
             steps {
-                echo 'Verifying workspace and files...'
+                echo '========== Verifying Workspace =========='
                 sh 'pwd'
                 sh 'ls -la'
-                sh 'echo "Dockerfile contents:"'
+                sh 'echo "--- Dockerfile ---"'
                 sh 'cat Dockerfile'
+                sh 'echo "--- index.html ---"'
+                sh 'cat index.html'
             }
         }
         
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image: ${DOCKER_IMAGE}"
+                echo "========== Building Docker Image: ${DOCKER_IMAGE} =========="
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE}")
                 }
+                echo '✅ Docker image built successfully!'
             }
         }
         
         stage('Push to Docker Hub') {
             steps {
-                echo 'Logging in to Docker Hub and pushing image...'
+                echo '========== Pushing to Docker Hub =========='
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
-                        dockerImage.push()
-                        dockerImage.push('latest')  // Also tag as latest
+                        dockerImage.push("${IMAGE_TAG}")
+                        dockerImage.push('latest')
                     }
                 }
+                echo '✅ Image pushed to Docker Hub successfully!'
             }
         }
         
         stage('Deploy to EC2') {
             steps {
-                echo 'Deploying to AWS EC2 instance...'
+                echo '========== Deploying to AWS EC2 =========='
                 script {
                     sshagent(credentials: ["${EC2_CREDENTIALS_ID}"]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                                # Stop and remove existing container if running
+                                echo "Stopping existing container..."
                                 docker stop nginx-app || true
                                 docker rm nginx-app || true
                                 
-                                # Pull the latest image
+                                echo "Pulling latest image..."
                                 docker pull ${DOCKER_IMAGE}
                                 
-                                # Run the new container
+                                echo "Starting new container..."
                                 docker run -d -p 80:80 --name nginx-app --restart always ${DOCKER_IMAGE}
                                 
-                                # Clean up old images
+                                echo "Cleaning up old images..."
                                 docker image prune -f
+                                
+                                echo "Deployment complete!"
+                                docker ps | grep nginx-app
                             '
                         """
                     }
                 }
+                echo '✅ Deployed to EC2 successfully!'
             }
         }
     }
     
     post {
         success {
-            echo 'Pipeline completed successfully! 🎉'
-            echo "Application deployed at: http://${EC2_HOST}"
+            echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+            echo '✅ PIPELINE COMPLETED SUCCESSFULLY! 🎉'
+            echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+            echo "🌐 Application URL: http://${EC2_HOST}"
+            echo "🐳 Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
+            echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
         }
         failure {
-            echo 'Pipeline failed! ❌'
+            echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+            echo '❌ PIPELINE FAILED!'
+            echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
         }
         always {
-            echo 'Build finished, workspace retained for debugging'
+            echo 'Pipeline execution finished.'
         }
     }
 }
