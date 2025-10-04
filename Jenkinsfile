@@ -1,6 +1,12 @@
 pipeline {
     agent any
     
+    options {
+        // Clean workspace before build
+        skipDefaultCheckout(false)
+        timestamps()
+    }
+    
     environment {
         // Docker Hub credentials ID (configured in Jenkins)
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
@@ -11,30 +17,25 @@ pipeline {
         IMAGE_TAG = '1.0'
         DOCKER_IMAGE = "${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
         
-        // AWS EC2 details - UPDATE THESE VALUES
-        EC2_HOST = '100.26.51.207'  // TODO: Replace with your EC2 IP
-        EC2_USER = 'ubuntu'  // or 'ubuntu' depending on your AMI
+        // AWS EC2 details - Replace with your actual EC2 IP address
+        EC2_HOST = '100.26.51.207'        // Example: '3.145.67.89' (your EC2 public IP)
+        EC2_USER = 'ubuntu'            // Use 'ubuntu' for Ubuntu AMIs
         EC2_CREDENTIALS_ID = 'ec2-ssh-credentials'
     }
     
     stages {
         stage('Clean Workspace') {
             steps {
-                echo 'Cleaning workspace before starting the build...'
-                deleteDir() // Ensures a fresh workspace
-            }
-        }
-        
-        stage('Checkout') {
-            steps {
-                echo 'Source code checked out from GitHub'
-                // Code is automatically checked out when using "Pipeline script from SCM"
+                echo 'Cleaning workspace...'
+                cleanWs()
             }
         }
         
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image: ${DOCKER_IMAGE}"
+                echo "Verifying files in workspace:"
+                sh 'ls -la'
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE}")
                 }
@@ -82,14 +83,14 @@ pipeline {
     
     post {
         success {
-            echo 'Pipeline completed successfully! '
+            echo 'Pipeline completed successfully! 🎉'
             echo "Application deployed at: http://${EC2_HOST}"
         }
         failure {
-            echo 'Pipeline failed! '
+            echo 'Pipeline failed! ❌'
         }
         always {
-            echo 'Cleaning up workspace after build...'
+            echo 'Cleaning up workspace...'
             cleanWs()
         }
     }
