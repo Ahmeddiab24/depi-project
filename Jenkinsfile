@@ -11,9 +11,9 @@ pipeline {
         IMAGE_TAG = '1.0'
         DOCKER_IMAGE = "${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
         
-        // AWS EC2 details - REPLACE WITH YOUR VALUES
-        EC2_HOST = '100.26.51.207'     // Example: '3.145.67.89'
-        EC2_USER = 'ubuntu'                // Use 'ubuntu' for Ubuntu AMIs
+        // AWS EC2 details 
+        EC2_HOST = '100.26.51.207'     
+        EC2_USER = 'ubuntu'                
         EC2_CREDENTIALS_ID = 'ec2-ssh-credentials'
     }
     
@@ -36,7 +36,7 @@ pipeline {
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE}")
                 }
-                echo '✅ Docker image built successfully!'
+                echo ' Docker image built successfully!'
             }
         }
         
@@ -49,7 +49,7 @@ pipeline {
                         dockerImage.push('latest')
                     }
                 }
-                echo '✅ Image pushed to Docker Hub successfully!'
+                echo ' Image pushed to Docker Hub successfully!'
             }
         }
         
@@ -79,7 +79,7 @@ pipeline {
                         """
                     }
                 }
-                echo '✅ Deployed to EC2 successfully!'
+                echo ' Deployed to EC2 successfully!'
             }
         }
     }
@@ -87,15 +87,15 @@ pipeline {
     post {
         success {
             echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-            echo '✅ PIPELINE COMPLETED SUCCESSFULLY! 🎉'
+            echo ' PIPELINE COMPLETED SUCCESSFULLY! '
             echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-            echo "🌐 Application URL: http://${EC2_HOST}"
-            echo "🐳 Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
+            echo " Application URL: http://${EC2_HOST}"
+            echo " Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
             echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
         }
         failure {
             echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-            echo '❌ PIPELINE FAILED!'
+            echo ' PIPELINE FAILED!'
             echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
         }
         always {
