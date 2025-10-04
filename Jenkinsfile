@@ -1,12 +1,6 @@
 pipeline {
     agent any
     
-    options {
-        // Clean workspace before build
-        skipDefaultCheckout(false)
-        timestamps()
-    }
-    
     environment {
         // Docker Hub credentials ID (configured in Jenkins)
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
@@ -18,24 +12,25 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
         
         // AWS EC2 details - Replace with your actual EC2 IP address
-        EC2_HOST = '100.26.51.207'        // Example: '3.145.67.89' (your EC2 public IP)
+        EC2_HOST = '100.26.51.207'        // TODO: Update with your EC2 public IP
         EC2_USER = 'ubuntu'            // Use 'ubuntu' for Ubuntu AMIs
         EC2_CREDENTIALS_ID = 'ec2-ssh-credentials'
     }
     
     stages {
-        stage('Clean Workspace') {
+        stage('Verify Workspace') {
             steps {
-                echo 'Cleaning workspace...'
-                cleanWs()
+                echo 'Verifying workspace and files...'
+                sh 'pwd'
+                sh 'ls -la'
+                sh 'echo "Dockerfile contents:"'
+                sh 'cat Dockerfile'
             }
         }
         
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image: ${DOCKER_IMAGE}"
-                echo "Verifying files in workspace:"
-                sh 'ls -la'
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE}")
                 }
@@ -90,8 +85,7 @@ pipeline {
             echo 'Pipeline failed! ❌'
         }
         always {
-            echo 'Cleaning up workspace...'
-            cleanWs()
+            echo 'Build finished, workspace retained for debugging'
         }
     }
 }
