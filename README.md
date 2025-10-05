@@ -1,4 +1,4 @@
-# depi-project
+# Containerized CI/CD Pipeline with Jenkins
 
 Complete DevOps CI/CD Project Explanation
 Project Concept
